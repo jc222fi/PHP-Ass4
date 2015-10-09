@@ -13,7 +13,15 @@ class RegisterView{
     //private static $keep = 'LoginView::KeepMeLoggedIn';
     private static $messageId = 'RegisterView::Message';
 
-    private $message = "";
+    private $loginView;
+    private $inputName;
+    private $message;
+    private $credentialsAreValid = false;
+    private $registerCredentialsDAL;
+
+    public function __construct(){
+        $this->loginView = new LoginView(new \model\LoginModel());
+    }
 
     public function response()
     {
@@ -43,8 +51,8 @@ class RegisterView{
     //Get username sent with form and strip from tags in case someone tries javascript injections
     public function getProvidedUsername(){
         if(isset($_POST[self::$name])) {
-            $inputName = $_POST[self::$name];
-            return strip_tags($inputName);
+            $this->inputName = $_POST[self::$name];
+            return strip_tags($this->inputName);
         }
         return null;
     }
@@ -64,20 +72,39 @@ class RegisterView{
         }
         return null;
     }
-    public function presentRegisterMessage(\model\RegisterCredentials $registerCredentials){
-        if($registerCredentials->getUserName() == null || strlen($registerCredentials->getUserName())<3){
+    public function validateInput(\model\RegisterCredentials $rc){
+        $this->message = "";
+        $this->registerCredentialsDAL = new \model\RegisterCredentialsDAL();
+        if(strlen($this->inputName) != strlen(strip_tags($this->inputName))){
+            $this->message = "Username contains invalid characters.";
+        }
+        if($this->registerCredentialsDAL->load($rc->getUserName()) != null){
+            $this->message = "User exists, pick another username.";
+        }
+        if($rc->getUserName()==null || strlen($rc->getUserName())<3){
             $this->message = "Username has too few characters, at least 3 characters.";
         }
-        if($registerCredentials->getUserPassword() == null || $registerCredentials->getUserPasswordRepeat() == null ||
-           strlen($registerCredentials->getUserPassword())<6){
+        if($rc->getUserPassword() == null || $rc->getUserPasswordRepeat() == null || strlen($rc->getUserPassword())<6){
             $this->message .= "Password has too few characters, at least 6 characters.";
         }
-        else{
-            $this->message = "Woohoo!";
+        else if($rc->getUserPasswordRepeat() != $rc->getUserPassword()){
+            $this->message = "Passwords do not match.";
         }
+        else{
+            $this->credentialsAreValid = true;
+        }
+    }
+    public function isValid(){
+        return $this->credentialsAreValid;
     }
     public function userWantsToRegister(){
         if(isset($_POST[self::$register])){
+            return true;
+        }
+        return false;
+    }
+    public function isUserDoneRegistering(){
+        if($this->credentialsAreValid){
             return true;
         }
         return false;

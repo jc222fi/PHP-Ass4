@@ -2,36 +2,36 @@
 
 namespace controller;
 
+require_once("LoginController.php");
+require_once("RegisterController.php");
+
 class MasterController{
     private $layoutView;
-    private $registeredUsers;
-    private $isUserLoggedIn = false;
+    private $registerView;
+    private $loginModel;
+    private $loginView;
+    private $dateTimeView;
 
     public function __construct(){
-        $this->mysqli = new \mysqli("localhost", "root", "", "", 3306, "C:/xampp/mysql/mysql.sock");
-
-        $this->registeredUsers = new \model\UsersDAL($this->mysqli);
         $this->layoutView = new \view\LayoutView();
-        $this->dateTimeView = new \view\DateTimeView();
+        $this->loginModel = new \model\LoginModel();
+        $this->loginView = new \view\LoginView($this->loginModel);
         $this->registerView = new \view\RegisterView();
-        $this->loginView = new \view\LoginView();
+        $this->dateTimeView = new \view\DateTimeView();
     }
 
-    public function doApplication(){
+    public function doApp(){
         if($this->layoutView->userWantsToRegister()){
-            $registerCredentials = new \model\RegisterCredentials($this->registerView->getProvidedUsername(), $this->registerView->getProvidedPassword(), $this->registerView->getProvidedPasswordRepeat());
-            $this->registerView->presentRegisterMessage($registerCredentials);
-
-            $this->registerView->response();
+            $registerController = new RegisterController($this->registerView);
+            $registerController->doRegister();
         }
         else{
-            $loginController = new LoginController($this->registeredUsers->getUsers());
-
-            $loginController->doApplication();
+            $loginController = new LoginController($this->loginModel, $this->loginView);
+            $loginController->doControl();
         }
     }
-
     public function getView(){
-        return $this->layoutView->render($this->isUserLoggedIn, $this->loginView, $this->registerView, $this->dateTimeView);
+        $userClient = $this->loginView->getUserClient();
+        return $this->layoutView->render($this->loginModel->isLoggedIn($userClient), $this->loginView, $this->registerView, $this->dateTimeView);
     }
 }

@@ -2,20 +2,26 @@
 
 namespace controller;
 
-class RegisterController{
-    private $layoutView;
-    private $registerView;
+require_once("model/RegisterCredentials.php");
+require_once("model/RegisterModel.php");
 
-    public function __construct(\view\LayoutView $layoutView){
-        $this->layoutView = $layoutView;
-        $this->registerView = new \view\RegisterView();
+class RegisterController{
+    private $registerView;
+    private $registerModel;
+
+    public function __construct(\view\RegisterView $registerView){
+        $this->registerView = $registerView;
+        $this->registerModel = new \model\RegisterModel();
     }
 
     public function doRegister(){
         if($this->registerView->userWantsToRegister()){
-            $userCredentials = new \model\Credentials($this->registerView->getProvidedUsername(), $this->registerView->getProvidedPassword());
-            $registerModel = new \model\RegisterModel();
+            $registerCredentials = new \model\RegisterCredentials($this->registerView->getProvidedUsername(), $this->registerView->getProvidedPassword(), $this->registerView->getProvidedPasswordRepeat());
+
+            $this->registerView->validateInput($registerCredentials);
+            if ($this->registerView->isValid()) {
+                $this->registerModel->doRegister($registerCredentials);
+            }
         }
     }
-
 }

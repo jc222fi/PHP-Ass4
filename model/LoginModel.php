@@ -1,37 +1,87 @@
 <?php
-
+/**
+ * Solution for assignment 2
+ * @author Daniel Toll
+ */
 namespace model;
+require_once("UserCredentials.php");
+require_once("TempCredentials.php");
+require_once("TempCredentialsDAL.php");
+require_once("LoggedInUser.php");
+require_once("UserClient.php");
+class LoginModel {
+    //TODO: Remove static to enable several sessions
+    private static $sessionUserLocation = "LoginModel::loggedInUser";
+    /**
+     * @var null | TempCredentials
+     */
+    private $tempCredentials = null;
+    private $tempDAL;
+    private $rcDAL;
+    private $matchingPassword;
 
-//No constructor function because this class should not initiate anything, only receive data and perform actions with that data
-class LoginModel{
-
-    //Function to make a login attempt with provided credentials compared to available user logins
-    public function tryLogin(Credentials $userCredentials, UserArray $users){
-
-        //First check to make sure the user is not already logged in (this is also checked in controller, but I prefer to check in all places to minimize errors)
-        if(!$this->isUserLoggedIn()){
-
-            //If input matches any saved user, return true (successful login attempt) and save in session variable as 'logged in'
-            if(($users->getUserByName($userCredentials->getUserName())!=null)&&
-                (password_verify($userCredentials->getUserPassword(), $users->getUserByName($userCredentials->getUserName())->getPassword()))){
-                $_SESSION['LoggedIn']= $userCredentials->getUserName();
-                return true;
-            }
+    public function __construct() {
+        self::$sessionUserLocation .= \Settings::APP_SESSION_NAME;
+        if (!isset($_SESSION)) {
+            //Alternate check with newer PHP
+            //if (\session_status() == PHP_SESSION_NONE) {
+            assert("No session started");
         }
-        //In all other cases, return false
-        return false;
+        //$this->tempDAL = new TempCredentialsDAL();
+        $this->rcDAL = new RegisterCredentialsDAL();
+
     }
-    //Unset the session variable when user chooses to logout
-    public function logOut(){
-        unset($_SESSION['LoggedIn']);
-    }
-    public function isUserLoggedIn() {
-        //Check session variable to see if user is set as logged in
-        if (isset($_SESSION['LoggedIn'])) {
+    /**
+     * Checks if user is logged in
+     * @param  UserClient $userClient The current calls Client
+     * @return boolean                true if user is logged in.
+     */
+    public function isLoggedIn(UserClient $userClient) {
+        if (isset($_SESSION[self::$sessionUserLocation])) {
+            $user = $_SESSION[self::$sessionUserLocation];
+            if ($user->sameAsLastTime($userClient) == false) {
+                return false;
+            }
             return true;
         }
-        else{
-            return false;
+        return false;
+    }
+    /**
+     * Attempts to authenticate
+     * @param  UserCredentials $uc
+     * @return boolean
+     */
+    public function doLogin(UserCredentials $uc) {
+
+        $this->matchingPassword = $this->rcDAL->load($uc->getName());
+
+        $loginByUsernameAndPassword = (\Settings::USERNAME === $uc->getName() && \Settings::PASSWORD === $uc->getPassword())
+                                       ||($this->matchingPassword != null && password_verify($uc->getPassword(), $this->matchingPassword));
+
+        if ( $loginByUsernameAndPassword) {
+            $user = new LoggedInUser($uc);
+            $_SESSION[self::$sessionUserLocation] = $user;
+            return true;
+        }
+        return false;
+    }
+    public function doLogout() {
+        unset($_SESSION[self::$sessionUserLocation]);
+    }
+    /**
+     * @return TempCredentials
+     */
+    public function getTempCredentials() {
+        return $this->tempCredentials;
+    }
+    /**
+     * renew the temporary credentials
+     *
+     * @param  UserClient $userClient
+     */
+    public function renew(UserClient $userClient) {
+        if ($this->isLoggedIn($userClient)) {
+            $user = $_SESSION[self::$sessionUserLocation];
         }
     }
 }

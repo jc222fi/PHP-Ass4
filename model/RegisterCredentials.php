@@ -8,9 +8,9 @@ class RegisterCredentials{
     private $userPasswordRepeat;
 
     public function __construct($userName, $userPassword, $userPasswordRepeat){
-        assert(is_string($this->userName = $userName));
-        assert(is_string($this->userPassword = $userPassword));
-        assert(is_string($this->userPasswordRepeat = $userPasswordRepeat));
+        $this->userName = $userName;
+        $this->userPassword = $userPassword;
+        $this->userPasswordRepeat = $userPasswordRepeat;
     }
     public function setUserName($userName){
         $this->userName = $userName;

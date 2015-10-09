@@ -1,35 +1,30 @@
 <?php
-
-//INCLUDE THE FILES NEEDED...
-require_once('view/LoginView.php');
-require_once('view/RegisterView.php');
-require_once('view/DateTimeView.php');
-require_once('view/LayoutView.php');
-
-require_once('model/User.php');
-require_once('model/UserArray.php');
-require_once('model/UsersDAL.php');
-require_once('model/Credentials.php');
-require_once('model/RegisterCredentials.php');
-require_once('model/LoginModel.php');
-
-require_once('controller/MasterController.php');
-require_once('controller/LoginController.php');
-
+/**
+ * Solution for assignment 2
+ * @author Daniel Toll
+ */
+require_once("Settings.php");
+require_once("controller/MasterController.php");
+require_once("model/LoginModel.php");
+require_once("view/LoginView.php");
+require_once("view/DateTimeView.php");
+require_once("view/LayoutView.php");
+require_once("view/RegisterView.php");
+if (Settings::DISPLAY_ERRORS) {
+    error_reporting(-1);
+    ini_set('display_errors', 'ON');
+}
+//session must be started before LoginModel is created
 session_start();
-
-//MAKE SURE ERRORS ARE SHOWN... MIGHT WANT TO TURN THIS OFF ON A PUBLIC SERVER
-error_reporting(E_ALL);
-ini_set('display_errors', 'On');
-
-//Create my models I need as a base for my login page
-/*$users = new \model\UserArray();
-$user = new \model\User("Admin", "Password");
-$users->addUser($user);*/
-
-//Initiate controller and start application functionality
-$controller=new \controller\MasterController();
-
-$controller->doApplication();
-
-$controller->getView();
+//Dependency injection
+$m = new \model\LoginModel();
+$v = new \view\LoginView($m);
+$rv = new \view\RegisterView();
+$c = new \controller\MasterController();
+//Controller must be run first since state is changed
+$c->doApp();
+$c->getView();
+//Generate output
+/*$dtv = new \view\DateTimeView();
+$lv = new \view\LayoutView();
+$lv->render($m->isLoggedIn($v->getUserClient()), $v, $rv, $dtv);*/
