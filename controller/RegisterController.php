@@ -21,7 +21,9 @@ class RegisterController{
             $this->registerView->validateInput($registerCredentials);
             if ($this->registerView->isValid()) {
                 $this->registerModel->doRegister($registerCredentials);
+                return true;
             }
+            return false;
         }
     }
 }

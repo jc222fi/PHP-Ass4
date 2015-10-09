@@ -13,7 +13,7 @@ require_once("view/NavigationView.php");
 require_once("view/RegisterView.php");
 if (Settings::DISPLAY_ERRORS) {
     error_reporting(-1);
-    ini_set('display_errors', 'ON');
+    ini_set('display_errors', 'OFF');
 }
 //session must be started before LoginModel is created
 session_start();
@@ -24,8 +24,3 @@ $rv = new \view\RegisterView();
 $c = new \controller\MasterController();
 //Controller must be run first since state is changed
 $c->doApp();
-//$c->getView();
-//Generate output
-/*$dtv = new \view\DateTimeView();
-$lv = new \view\LayoutView();
-$lv->render($m->isLoggedIn($v->getUserClient()), $v, $rv, $dtv);*/

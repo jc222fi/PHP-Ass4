@@ -25,8 +25,10 @@ class MasterController{
     public function doApp(){
         if($this->navigationView->userWantsToRegister()){
             $registerController = new RegisterController($this->registerView);
-            $registerController->doRegister();
-            $this->loginView->response($this->registerView->getProvidedUsername());
+            if($registerController->doRegister()){
+                $this->loginView->setUserDidRegister();
+                $this->loginView->response($this->registerView->getProvidedUsername());
+            }
         }
         else{
             $loginController = new LoginController($this->loginModel, $this->loginView);
@@ -35,8 +37,4 @@ class MasterController{
         $userClient = $this->loginView->getUserClient();
         $this->layoutView->render($this->loginModel->isLoggedIn($userClient),$this->navigationView, $this->loginView, $this->registerView, $this->dateTimeView);
     }
-    /*public function getView(){
-        $userClient = $this->loginView->getUserClient();
-        return $this->layoutView->render($this->loginModel->isLoggedIn($userClient),$this->navigationView, $this->loginView, $this->registerView, $this->dateTimeView);
-    }*/
 }

@@ -25,7 +25,6 @@ class RegisterView{
 
     public function response()
     {
-        //Check if user is logged in or not and generates form depending on result
         $response = $this->generateRegisterFormHTML($this->getProvidedUsername());
         return $response;
     }

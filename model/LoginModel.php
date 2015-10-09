@@ -54,9 +54,8 @@ class LoginModel {
     public function doLogin(UserCredentials $uc) {
 
         $this->matchingPassword = $this->rcDAL->load($uc->getName());
-
         $loginByUsernameAndPassword = (\Settings::USERNAME === $uc->getName() && \Settings::PASSWORD === $uc->getPassword())
-                                       ||($this->matchingPassword != null && password_verify($uc->getPassword(), $this->matchingPassword));
+            ||($this->matchingPassword != "" && password_verify($uc->getPassword(), $this->matchingPassword));
 
         if ( $loginByUsernameAndPassword) {
             $user = new LoggedInUser($uc);

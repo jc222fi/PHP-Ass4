@@ -21,7 +21,8 @@ class LoginView {
      * This name is used in session
      * @var string
      */
-    private static $sessionSaveLocation = "\\view\\LoginView\\message";
+    private static $sessionSaveLocation1 = "\\view\\LoginView\\message";
+    private static $sessionSaveLocation2 = "\\view\\LoginView\\name";
     /**
      * view state set by controller through setters
      * @var boolean
@@ -33,13 +34,13 @@ class LoginView {
     /**
      * @var \model\LoginModel
      */
-    private $message = "";
     private $model;
     /**
      * @param \model\LoginModel $model
      */
     public function __construct(\model\LoginModel $model) {
-        self::$sessionSaveLocation .= \Settings::APP_SESSION_NAME;
+        self::$sessionSaveLocation1 .= \Settings::APP_SESSION_NAME;
+        self::$sessionSaveLocation2 .= \Settings::APP_SESSION_NAME;
         $this->model = $model;
     }
     /**
@@ -48,6 +49,9 @@ class LoginView {
      *
      * @return boolean true if user did try to login
      */
+    public Function setUserDidRegister(){
+        $this->userDidRegister = true;
+    }
     public function userWantsToLogin() {
         return isset($_POST[self::$login]) ||
         isset($_COOKIE[self::$cookieName]);
@@ -65,7 +69,7 @@ class LoginView {
      * @return \model\UserCredentials
      */
     public function getCredentials() {
-        return new \model\UserCredentials($this->getUserName(),
+        return new \model\UserCredentials($this->getUsername(),
             $this->getPassword(),
             $this->getUserClient());
     }
@@ -96,9 +100,6 @@ class LoginView {
     public function setUserLogout() {
         $this->userDidLogout = true;
     }
-    public function setUserDidRegister(){
-        $this->userDidRegister = true;
-    }
     /**
      * Create HTTP response
      *
@@ -118,18 +119,19 @@ class LoginView {
      * @return [String HTML
      */
     private function doLogoutForm() {
+        $message = "";
         //Correct Login Message
         if ($this->loginHasSucceeded === true) {
-            $this->message = "Welcome";
+            $message = "Welcome";
             if ($this->rememberMe()) {
                 if (isset($_COOKIE[self::$CookiePassword])) {
-                    $this->message .= " back with cookie";
+                    $message .= " back with cookie";
                 } else {
-                    $this->message .= " and you will be remembered";
+                    $message .= " and you will be remembered";
                 }
             }
         } else {
-            $this->message = $this->getSessionMessage();
+            $message = $this->getSessionMessage();
 
         }
         //Set new cookies
@@ -139,45 +141,56 @@ class LoginView {
             $this->unsetCookies();
         }
         //generate HTML
-        return $this->getLogoutButtonHTML();
+        return $this->getLogoutButtonHTML($message);
     }
     /**
      * @sideeffect Sets cookies!
      * @return [String HTML
      */
     public function doLoginForm($inputName) {
+        $message = "";
         //Correct messages
         if ($this->userWantsToLogout() && $this->userDidLogout) {
-            $this->message = "Bye bye!";
-            $this->redirect($this->message);
+            $message = "Bye bye!";
+            $this->redirect($message, "");
         }else if($this->userDidRegister){
-            $this->message = "Registered new user";
-            $this->redirect($this->message);
+            $message = "Registered new user.";
+            $this->redirect($message, $inputName);
         } else if ($this->userWantsToLogin() && $this->getRequestUserName() == "") {
-            $this->message =  "Username is missing";
+            $message =  "Username is missing";
         } else if ($this->userWantsToLogin() && $this->getPassword() == "") {
-            $this->message =  "Password is missing";
+            $message =  "Password is missing";
         } else if ($this->loginHasFailed === true) {
-            $this->message =  "Wrong name or password";
+            $message =  "Wrong name or password";
         } else {
-            $this->message = $this->getSessionMessage();
+            $message = $this->getSessionMessage();
+            $inputName = $this->getSessionInputName();
         }
         //cookies
         $this->unsetCookies();
 
         //generate HTML
-        return $this->generateLoginFormHTML($inputName, $this->message);
+        return $this->generateLoginFormHTML($inputName, $message);
     }
-    private function redirect($message) {
-        $_SESSION[self::$sessionSaveLocation] = $message;
+    private function redirect($message, $inputName) {
+        $_SESSION[self::$sessionSaveLocation1] = $message;
+        $_SESSION[self::$sessionSaveLocation2] = $inputName;
         $actual_link = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
         header("Location: $actual_link");
     }
     private function getSessionMessage() {
-        if (isset($_SESSION[self::$sessionSaveLocation])) {
-            $message = $_SESSION[self::$sessionSaveLocation];
-            unset($_SESSION[self::$sessionSaveLocation]);
+        if (isset($_SESSION[self::$sessionSaveLocation1])) {
+            $message = $_SESSION[self::$sessionSaveLocation1];
+            unset($_SESSION[self::$sessionSaveLocation1]);
             return $message;
+        }
+        return "";
+    }
+    private function getSessionInputName() {
+        if (isset($_SESSION[self::$sessionSaveLocation2])) {
+            $inputName = $_SESSION[self::$sessionSaveLocation2];
+            unset($_SESSION[self::$sessionSaveLocation2]);
+            return $inputName;
         }
         return "";
     }
@@ -190,9 +203,9 @@ class LoginView {
         unset($_COOKIE[self::$cookieName]);
         unset($_COOKIE[self::$CookiePassword]);
     }
-    private function getLogoutButtonHTML() {
+    private function getLogoutButtonHTML($message) {
         return "<form  method='post' >
-			<p id='" . self::$messageId . "'>$this->message</p>
+			<p id='" . self::$messageId . "'>$message</p>
 			<input type='submit' name='" . self::$logout . "' value='logout'/>
 			</form>";
     }

@@ -22,9 +22,6 @@ class UserCredentials {
     public function getPassword() {
         return $this->password;
     }
-    /*public function getTempPassword() {
-        return $this->tempPassword;
-    }*/
     public function getClient()  {
         return $this->client;
     }
