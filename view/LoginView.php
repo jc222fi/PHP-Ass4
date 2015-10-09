@@ -29,10 +29,11 @@ class LoginView {
     private $loginHasFailed = false;
     private $loginHasSucceeded = false;
     private $userDidLogout = false;
+    private $userDidRegister = false;
     /**
      * @var \model\LoginModel
      */
-    private $message;
+    private $message = "";
     private $model;
     /**
      * @param \model\LoginModel $model
@@ -95,6 +96,9 @@ class LoginView {
     public function setUserLogout() {
         $this->userDidLogout = true;
     }
+    public function setUserDidRegister(){
+        $this->userDidRegister = true;
+    }
     /**
      * Create HTTP response
      *
@@ -102,11 +106,11 @@ class LoginView {
      * @sideeffect Sets cookies!
      * @return String HTML
      */
-    public function response() {
+    public function response($inputName) {
         if ($this->model->isLoggedIn($this->getUserClient())) {
             return $this->doLogoutForm();
         } else {
-            return $this->doLoginForm($this->getRequestUserName(), "");
+            return $this->doLoginForm($inputName);
         }
     }
     /**
@@ -141,11 +145,14 @@ class LoginView {
      * @sideeffect Sets cookies!
      * @return [String HTML
      */
-    public function doLoginForm($inputName, $message) {
+    public function doLoginForm($inputName) {
         //Correct messages
         if ($this->userWantsToLogout() && $this->userDidLogout) {
             $this->message = "Bye bye!";
-            //$this->redirect($message);
+            $this->redirect($this->message);
+        }else if($this->userDidRegister){
+            $this->message = "Registered new user";
+            $this->redirect($this->message);
         } else if ($this->userWantsToLogin() && $this->getRequestUserName() == "") {
             $this->message =  "Username is missing";
         } else if ($this->userWantsToLogin() && $this->getPassword() == "") {
@@ -153,13 +160,18 @@ class LoginView {
         } else if ($this->loginHasFailed === true) {
             $this->message =  "Wrong name or password";
         } else {
-            $this->message = $message;
+            $this->message = $this->getSessionMessage();
         }
         //cookies
         $this->unsetCookies();
 
         //generate HTML
-        return $this->generateLoginFormHTML($inputName);
+        return $this->generateLoginFormHTML($inputName, $this->message);
+    }
+    private function redirect($message) {
+        $_SESSION[self::$sessionSaveLocation] = $message;
+        $actual_link = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
+        header("Location: $actual_link");
     }
     private function getSessionMessage() {
         if (isset($_SESSION[self::$sessionSaveLocation])) {
@@ -184,11 +196,11 @@ class LoginView {
 			<input type='submit' name='" . self::$logout . "' value='logout'/>
 			</form>";
     }
-    public function generateLoginFormHTML($inputName) {
+    public function generateLoginFormHTML($inputName, $message) {
         return "<form method='post' >
 				<fieldset>
 					<legend>Login - enter Username and password</legend>
-					<p id='".self::$messageId."'>$this->message</p>
+					<p id='".self::$messageId."'>$message</p>
 					<label for='".self::$name."'>Username :</label>
 					<input type='text' id='".self::$name."' name='".self::$name."' value='".$inputName."'/>
 					<label for='".self::$password."'>Password :</label>

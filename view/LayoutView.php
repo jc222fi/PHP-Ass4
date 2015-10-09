@@ -5,10 +5,8 @@
  */
 namespace view;
 class LayoutView {
-    private $url;
-    private static $register = "register";
 
-    public function render($isLoggedIn, LoginView $v, RegisterView $rv, DateTimeView $dtv) {
+    public function render($isLoggedIn, NavigationView $nv, LoginView $v, RegisterView $rv, DateTimeView $dtv) {
         $ret1 = '<!DOCTYPE html>
       <html>
         <head>
@@ -16,24 +14,30 @@ class LayoutView {
           <title>Login Example</title>
         </head>
         <body>
-          <h1>Assignment 4</h1>'
-            . $this->getLink() .'
-          '. $this->renderIsLoggedIn($isLoggedIn) .'
-
-          <div class="container">
-          ';
+          <h1>Assignment 4</h1>';
         echo $ret1;
 
-
-        if($rv->isUserDoneRegistering()){
-            $ret2 = $v->doLoginForm($rv->getProvidedUsername(), "Registered new user");
+        if(!$isLoggedIn){
+            if($nv->userWantsToRegister()){
+                $ret3 = $nv->getLinkToLogin();
+            }
+            else{
+                $ret3 = $nv->getLinkToRegister("Register a new user");
+            }
         }
-        else if($this->userWantsToRegister() && !$rv->isUserDoneRegistering()){
-            $ret2 = $rv->response();
+        $ret3 .= '
+          '. $this->renderIsLoggedIn($isLoggedIn) .'
+          <div class="container">
+          ';
+        echo $ret3;
+
+        if($rv->isUserDoneRegistering()|| !$nv->userWantsToRegister()){
+            $ret2 =  $v->response($rv->getProvidedUsername());
         }
         else{
-            $ret2 =  $v->response();
+            $ret2 = $rv->response();
         }
+
 
         $ret2 .='    ' . $dtv->show() . '
           </div>
@@ -43,26 +47,7 @@ class LayoutView {
         </body>
         </html>
     ';
-
         echo $ret2;
-    }
-    public function setUrl($url){
-        return $url;
-    }
-    public function getLink(){
-        if (isset($_GET[self::$register])) {
-            return "<a href='?'>Back to login</a>";
-        }
-        else{
-            $url = self::$register;
-            return "<a href='?$url=1'>Register a new user</a>";
-        }
-    }
-    public function userWantsToRegister(){
-        if(isset($_GET[self::$register])){
-            return true;
-        }
-        return false;
     }
     private function renderIsLoggedIn($isLoggedIn) {
         if ($isLoggedIn) {

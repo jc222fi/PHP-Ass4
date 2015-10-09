@@ -8,14 +8,10 @@ class NavigationView{
     public function getLinkToLogin(){
         return "<a href='?'>Back to login</a>";
     }
-    public function getLinkToRegister(){
-        $url = self::$register;
-        return "<a href='?$url=1'>Register a new user</a>";
+    public function getLinkToRegister($linkText){
+        return "<a href='?". self::$register ."=1'>$linkText</a>";
     }
     public function userWantsToRegister(){
-        if(isset($_GET[self::$register])){
-            return true;
-        }
-        return false;
+        return isset($_GET[self::$register]);
     }
 }

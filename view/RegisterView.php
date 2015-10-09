@@ -75,23 +75,26 @@ class RegisterView{
     public function validateInput(\model\RegisterCredentials $rc){
         $this->message = "";
         $this->registerCredentialsDAL = new \model\RegisterCredentialsDAL();
-        if(strlen($this->inputName) != strlen(strip_tags($this->inputName))){
-            $this->message = "Username contains invalid characters.";
-        }
-        if($this->registerCredentialsDAL->load($rc->getUserName()) != null){
-            $this->message = "User exists, pick another username.";
-        }
+
         if($rc->getUserName()==null || strlen($rc->getUserName())<3){
             $this->message = "Username has too few characters, at least 3 characters.";
         }
         if($rc->getUserPassword() == null || $rc->getUserPasswordRepeat() == null || strlen($rc->getUserPassword())<6){
             $this->message .= "Password has too few characters, at least 6 characters.";
         }
-        else if($rc->getUserPasswordRepeat() != $rc->getUserPassword()){
-            $this->message = "Passwords do not match.";
-        }
         else{
-            $this->credentialsAreValid = true;
+            if(strlen($this->inputName) != strlen(strip_tags($this->inputName))){
+                $this->message = "Username contains invalid characters.";
+            }
+            else if($this->registerCredentialsDAL->load($rc->getUserName()) != null){
+                $this->message = "User exists, pick another username.";
+            }
+            else if($rc->getUserPasswordRepeat() != $rc->getUserPassword()){
+                $this->message = "Passwords do not match.";
+            }
+            else{
+                $this->credentialsAreValid = true;
+            }
         }
     }
     public function isValid(){
